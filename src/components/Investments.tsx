@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getInvestments } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { getInvestments, growInvestments } from "@/lib/api";
 import { LineChart as LineChartIcon } from "lucide-react";
 
 interface Investment {
@@ -36,8 +37,18 @@ const Investments = () => {
   const totals = useMemo(() => {
     const totalInvested = list.reduce((s, i) => s + i.investmentAmount, 0);
     const currentValue = list.reduce((s, i) => s + i.units * i.nav, 0);
-    return { totalInvested, currentValue };
+    const profit = currentValue - totalInvested;
+    return { totalInvested, currentValue, profit };
   }, [list]);
+
+  const onGrow = async (risk: 'high' | 'low', ratePct: number) => {
+    try {
+      await growInvestments(risk, ratePct);
+      await load();
+    } catch {
+      // noop
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -48,14 +59,25 @@ const Investments = () => {
             Mutual Fund Investments (Mock)
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <div className="text-sm text-muted-foreground">Total Invested</div>
-            <div className="text-2xl font-bold">₹{totals.totalInvested.toLocaleString('en-IN')}</div>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div>
+              <div className="text-sm text-muted-foreground">Total Invested</div>
+              <div className="text-2xl font-bold">₹{totals.totalInvested.toLocaleString('en-IN')}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Current Value</div>
+              <div className="text-2xl font-bold text-success">₹{totals.currentValue.toLocaleString('en-IN')}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Profit</div>
+              <div className={`text-2xl font-bold ${totals.profit >= 0 ? 'text-success' : 'text-destructive'}`}>₹{totals.profit.toLocaleString('en-IN')}</div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm text-muted-foreground">Current Value</div>
-            <div className="text-2xl font-bold text-success">₹{totals.currentValue.toLocaleString('en-IN')}</div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => onGrow('high', 1)}>Grow High Risk +1%</Button>
+            <Button variant="outline" size="sm" onClick={() => onGrow('low', 0.3)}>Grow Low Risk +0.3%</Button>
           </div>
         </CardContent>
       </Card>

@@ -113,6 +113,32 @@ export async function credit(amount: number) {
   return res.json();
 }
 
+export async function debit(amount: number) {
+  const res = await fetch(`${API_BASE}/api/transactions/debit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to debit (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function batchCredits(amounts: number[]) {
+  const res = await fetch(`${API_BASE}/api/transactions/batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amounts }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to batch credit (${res.status})`);
+  }
+  return res.json();
+}
+
 export async function getTransactions() {
   const res = await fetch(`${API_BASE}/api/transactions`);
   if (!res.ok) throw new Error(`Failed to fetch transactions (${res.status})`);
@@ -122,5 +148,64 @@ export async function getTransactions() {
 export async function getInvestments() {
   const res = await fetch(`${API_BASE}/api/investments`);
   if (!res.ok) throw new Error(`Failed to fetch investments (${res.status})`);
+  return res.json();
+}
+
+export async function invest(amount: number, risk: 'high' | 'low') {
+  const res = await fetch(`${API_BASE}/api/investments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, risk }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to invest (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function liquidate(amount: number) {
+  const res = await fetch(`${API_BASE}/api/investments/liquidate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to liquidate (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function growInvestments(risk: 'high' | 'low', ratePct: number) {
+  const res = await fetch(`${API_BASE}/api/investments/grow`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ risk, ratePct }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to grow NAV (${res.status})`);
+  }
+  return res.json();
+}
+
+// Mock settings endpoints
+export async function getSettings() {
+  const res = await fetch(`${API_BASE}/api/settings`);
+  if (!res.ok) throw new Error(`Failed to fetch settings (${res.status})`);
+  return res.json();
+}
+
+export async function updateSettings(payload: Partial<{ autoSaveRate: number; weeklyTopUp: number; minThreshold: number; roundUpsEnabled: boolean }>) {
+  const res = await fetch(`${API_BASE}/api/settings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to update settings (${res.status})`);
+  }
   return res.json();
 }

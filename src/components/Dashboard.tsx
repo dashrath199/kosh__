@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
-import { getDashboard } from "@/lib/api";
+import { getDashboard, getSettings, updateSettings, credit, debit as debitApi, batchCredits as batchCreditsApi, invest as investApi } from "@/lib/api";
+import { invest as _unused, liquidate as liquidateApi } from "@/lib/api";
 
 import {
   TrendingUp,
@@ -44,6 +45,17 @@ const Dashboard = ({ user }: DashboardProps) => {
   const [weeklyTopUp, setWeeklyTopUp] = useState<number>(500);
   const [modifyOpen, setModifyOpen] = useState(false);
   const [pendingWeeklyTopUp, setPendingWeeklyTopUp] = useState<string>("500");
+  const [simulateOpen, setSimulateOpen] = useState(false);
+  const [simulateAmount, setSimulateAmount] = useState<string>("");
+  const [simulateDebitOpen, setSimulateDebitOpen] = useState(false);
+  const [simulateDebitAmount, setSimulateDebitAmount] = useState<string>("");
+  const [simulateBatchOpen, setSimulateBatchOpen] = useState(false);
+  const [simulateBatchAmounts, setSimulateBatchAmounts] = useState<string>("");
+  const [investOpen, setInvestOpen] = useState(false);
+  const [investAmount, setInvestAmount] = useState<string>("");
+  const [investRisk, setInvestRisk] = useState<'high' | 'low'>('low');
+  const [liquidateOpen, setLiquidateOpen] = useState(false);
+  const [liquidateAmount, setLiquidateAmount] = useState<string>("");
 
   useEffect(() => {
     let mounted = true;
@@ -67,10 +79,75 @@ const Dashboard = ({ user }: DashboardProps) => {
     return () => { mounted = false };
   }, []);
 
+  // Load settings from backend mock
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const s = await getSettings();
+        if (!mounted) return;
+        if (typeof s.autoSaveRate === 'number') setAutoSaveRate(s.autoSaveRate);
+        if (typeof s.weeklyTopUp === 'number') setWeeklyTopUp(s.weeklyTopUp);
+      } catch {
+        // ignore in mock if endpoint not available
+      }
+    })();
+    return () => { mounted = false };
+  }, []);
+
   const resetNewGoalForm = () => {
     setNewGoalName("");
     setNewGoalTarget("");
     setNewGoalCurrent("");
+  };
+
+  const handleInvest = async () => {
+    const amt = Number(investAmount);
+    if (!Number.isFinite(amt) || amt <= 0) return;
+    if (amt > treasuryBalance) return;
+    try {
+      await investApi(amt, investRisk);
+      await refreshDashboard();
+      setInvestOpen(false);
+      setInvestAmount("");
+    } catch {}
+  };
+
+  const handleLiquidate = async () => {
+    const amt = Number(liquidateAmount);
+    if (!Number.isFinite(amt) || amt <= 0) return;
+    if (amt > investedAmount) return;
+    try {
+      await liquidateApi(amt);
+      await refreshDashboard();
+      setLiquidateOpen(false);
+      setLiquidateAmount("");
+    } catch {}
+  };
+
+  const handleSimulateDebit = async () => {
+    const amt = Number(simulateDebitAmount);
+    if (!Number.isFinite(amt) || amt <= 0) return;
+    try {
+      await debitApi(amt);
+      await refreshDashboard();
+      setSimulateDebitOpen(false);
+      setSimulateDebitAmount("");
+    } catch {}
+  };
+
+  const handleSimulateBatch = async () => {
+    const nums = simulateBatchAmounts
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    if (!nums.length) return;
+    try {
+      await batchCreditsApi(nums);
+      await refreshDashboard();
+      setSimulateBatchOpen(false);
+      setSimulateBatchAmounts("");
+    } catch {}
   };
 
   const handleSaveRate = () => {
@@ -78,6 +155,8 @@ const Dashboard = ({ user }: DashboardProps) => {
     if (!Number.isFinite(parsed)) return;
     const clamped = Math.max(0, Math.min(100, parsed));
     setAutoSaveRate(clamped);
+    // Persist to backend mock (fire and forget)
+    updateSettings({ autoSaveRate: clamped }).catch(() => {});
     setAdjustOpen(false);
   };
 
@@ -91,7 +170,35 @@ const Dashboard = ({ user }: DashboardProps) => {
     if (Number.isFinite(parsedWeekly) && parsedWeekly >= 0) {
       setWeeklyTopUp(parsedWeekly);
     }
+    // Persist to backend mock (fire and forget)
+    updateSettings({ autoSaveRate, weeklyTopUp }).catch(() => {});
     setModifyOpen(false);
+  };
+
+  const refreshDashboard = async () => {
+    try {
+      const data = await getDashboard();
+      setTreasuryBalance(data.treasuryBalance ?? 0);
+      setInvestedAmount(data.investedAmount ?? 0);
+      setSavingsThisMonth(data.savingsThisMonth ?? 0);
+      setGoals(data.goals ?? []);
+      setRecentActivity(data.recentActivity ?? []);
+    } catch (e) {
+      // ignore for simulate helper
+    }
+  };
+
+  const handleSimulateCredit = async () => {
+    const amt = Number(simulateAmount);
+    if (!Number.isFinite(amt) || amt <= 0) return;
+    try {
+      await credit(amt);
+      await refreshDashboard();
+      setSimulateOpen(false);
+      setSimulateAmount("");
+    } catch (e) {
+      // optionally surface error via toast later
+    }
   };
 
   const handleAddGoal = () => {
@@ -172,6 +279,136 @@ const Dashboard = ({ user }: DashboardProps) => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* Simulate incoming credit (mock) */}
+        <Dialog open={simulateOpen} onOpenChange={setSimulateOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              Simulate Credit
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Simulate Incoming Credit</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="sim-amount">Amount (₹)</Label>
+                <Input
+                  id="sim-amount"
+                  type="number"
+                  min={1}
+                  step={1}
+                  placeholder="1000"
+                  value={simulateAmount}
+                  onChange={(e) => setSimulateAmount(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSimulateOpen(false)}>Cancel</Button>
+              <Button onClick={handleSimulateCredit}>Create Credit</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* Simulate debit (mock) */}
+        <Dialog open={simulateDebitOpen} onOpenChange={setSimulateDebitOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              Simulate Debit
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Simulate Debit</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="sim-debit-amount">Amount (₹)</Label>
+                <Input
+                  id="sim-debit-amount"
+                  type="number"
+                  min={1}
+                  step={1}
+                  placeholder="500"
+                  value={simulateDebitAmount}
+                  onChange={(e) => setSimulateDebitAmount(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSimulateDebitOpen(false)}>Cancel</Button>
+              <Button onClick={handleSimulateDebit}>Create Debit</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* Simulate batch credits (mock) */}
+        <Dialog open={simulateBatchOpen} onOpenChange={setSimulateBatchOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              Simulate Batch
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Simulate Batch Credits</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="sim-batch-amounts">Amounts (comma separated)</Label>
+                <Input
+                  id="sim-batch-amounts"
+                  type="text"
+                  placeholder="1000, 2500, 320"
+                  value={simulateBatchAmounts}
+                  onChange={(e) => setSimulateBatchAmounts(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Example: 1200, 850, 990</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSimulateBatchOpen(false)}>Cancel</Button>
+              <Button onClick={handleSimulateBatch}>Create Batch</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* Invest dialog */}
+        <Dialog open={investOpen} onOpenChange={setInvestOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Invest from Treasury</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-1">
+              <div className="text-sm text-muted-foreground">Available: ₹{treasuryBalance.toLocaleString('en-IN')}</div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant={investRisk === 'high' ? 'primary' : 'outline'} onClick={() => setInvestRisk('high')}>High Risk (High Profit)</Button>
+                <Button variant={investRisk === 'low' ? 'primary' : 'outline'} onClick={() => setInvestRisk('low')}>Low Risk (Less Profit)</Button>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invest-amount">Amount to invest (₹)</Label>
+                <Input
+                  id="invest-amount"
+                  type="number"
+                  min={1}
+                  step={1}
+                  placeholder="Enter amount"
+                  value={investAmount}
+                  onChange={(e) => setInvestAmount(e.target.value)}
+                />
+                <div className="text-xs text-muted-foreground">
+                  {(() => { const amt = Number(investAmount); return amt > treasuryBalance ? 'Amount exceeds available treasury' : ''; })()}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setInvestAmount(String(treasuryBalance))}>Max</Button>
+                  <Button size="sm" variant="outline" onClick={() => setInvestAmount(String(Math.max(0, Math.floor(treasuryBalance / 2))))}>Half</Button>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setInvestOpen(false)}>Cancel</Button>
+              <Button onClick={handleInvest} disabled={!investAmount || Number(investAmount) <= 0 || Number(investAmount) > treasuryBalance || treasuryBalance <= 0}>Invest</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Key Metrics */}
@@ -179,7 +416,12 @@ const Dashboard = ({ user }: DashboardProps) => {
         <Card className="bg-gradient-card shadow-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Treasury Balance</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => { setInvestOpen(true); setInvestAmount(String(treasuryBalance)); setInvestRisk('low'); }} disabled={treasuryBalance <= 0}>
+                Invest
+              </Button>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">₹{treasuryBalance.toLocaleString('en-IN')}</div>
@@ -190,11 +432,50 @@ const Dashboard = ({ user }: DashboardProps) => {
             </p>
           </CardContent>
         </Card>
+        {/* Liquidate dialog */}
+        <Dialog open={liquidateOpen} onOpenChange={setLiquidateOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Liquidate to Treasury</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-1">
+              <div className="text-sm text-muted-foreground">Invested available: ₹{investedAmount.toLocaleString('en-IN')}</div>
+              <div className="space-y-2">
+                <Label htmlFor="liq-amount">Amount to liquidate (₹)</Label>
+                <Input
+                  id="liq-amount"
+                  type="number"
+                  min={1}
+                  step={1}
+                  placeholder="Enter amount"
+                  value={liquidateAmount}
+                  onChange={(e) => setLiquidateAmount(e.target.value)}
+                />
+                <div className="text-xs text-muted-foreground">
+                  {(() => { const amt = Number(liquidateAmount); return amt > investedAmount ? 'Amount exceeds invested funds' : ''; })()}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setLiquidateAmount(String(investedAmount))}>Max</Button>
+                  <Button size="sm" variant="outline" onClick={() => setLiquidateAmount(String(Math.max(0, Math.floor(investedAmount / 2))))}>Half</Button>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setLiquidateOpen(false)}>Cancel</Button>
+              <Button onClick={handleLiquidate} disabled={!liquidateAmount || Number(liquidateAmount) <= 0 || Number(liquidateAmount) > investedAmount}>Liquidate</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Card className="bg-gradient-card shadow-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Invested Amount</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => { setLiquidateOpen(true); setLiquidateAmount(String(investedAmount)); }} disabled={investedAmount <= 0}>
+                Liquidate
+              </Button>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-success">₹{investedAmount.toLocaleString('en-IN')}</div>

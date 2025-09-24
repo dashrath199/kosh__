@@ -8,8 +8,8 @@ import AuthSection from "@/components/AuthSection";
 import Dashboard from "@/components/Dashboard";
 import Navigation from "@/components/Navigation";
 import BankLink from "@/components/BankLink";
-import Transactions from "@/components/Transactions";
 import Investments from "@/components/Investments";
+import GetPayment from "@/components/GetPayment";
 
 const queryClient = new QueryClient();
 
@@ -91,7 +91,7 @@ const Index = () => {
           <main className="container mx-auto px-4 py-8">
             {dashboardView === 'dashboard' && <Dashboard user={user} />}
             {dashboardView === 'bank' && <BankLink />}
-            {dashboardView === 'transactions' && <Transactions />}
+            {dashboardView === 'get-payment' && <GetPayment onGoToDashboard={() => setDashboardView('dashboard')} />}
             {dashboardView === 'investments' && <Investments />}
             {dashboardView === 'goals' && (
               <div className="text-center py-20">

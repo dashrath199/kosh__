@@ -11,7 +11,8 @@ import {
   LogOut,
   Link as LinkIcon,
   ListOrdered,
-  LineChart
+  LineChart,
+  DollarSign
 } from "lucide-react";
 
 interface NavigationProps {
@@ -26,7 +27,7 @@ const Navigation = ({ currentView, onViewChange, onLogout }: NavigationProps) =>
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'bank', label: 'Bank', icon: LinkIcon },
-    { id: 'transactions', label: 'Transactions', icon: ListOrdered },
+    { id: 'get-payment', label: 'Get Payment', icon: DollarSign },
     { id: 'investments', label: 'Investments', icon: LineChart },
     { id: 'goals', label: 'Goals', icon: Target },
     { id: 'analytics', label: 'Analytics', icon: PieChart },

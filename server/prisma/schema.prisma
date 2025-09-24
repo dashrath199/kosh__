@@ -19,4 +19,104 @@ model User {
   passwordHash String
   name         String?
   createdAt    DateTime @default(now())
+
+  // Relations
+  banks        UserBank[]
+  settings     Settings?
+  transactions Transaction[]
+  treasury     Treasury?
+  entries      TreasuryEntry[]
+  positions    InvestmentPosition[]
+}
+
+model UserBank {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  provider      String // e.g. "mock" | "plaid" | "setu"
+  accountNumber String
+  status        String // "linked" | "revoked"
+  linkedAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Settings {
+  id              Int     @id @default(autoincrement())
+  userId          Int     @unique
+  autoSaveRate    Float   @default(3.5)
+  weeklyTopUp     Int     @default(500)
+  minThreshold    Int     @default(100)
+  roundUpsEnabled Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id                    Int      @id @default(autoincrement())
+  userId                Int
+  providerTransactionId String?  @unique
+  type                  String // "credit" | "debit"
+  amount                Int
+  currency              String   @default("INR")
+  description           String?
+  occurredAt            DateTime @default(now())
+
+  user    User            @relation(fields: [userId], references: [id])
+  entries TreasuryEntry[]
+
+  @@index([userId, occurredAt])
+}
+
+model Treasury {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  balance   Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model TreasuryEntry {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  transactionId Int?
+  kind          String // "save" | "invest" | "liquidate"
+  amount        Int // positive for 'save' & 'liquidate'; store invest amount too for history
+  description   String?
+  createdAt     DateTime @default(now())
+
+  // Optional investment context
+  risk        String? // "high" | "low"
+  units       Float?
+  navAtInvest Float?
+
+  user        User         @relation(fields: [userId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([userId, kind])
+}
+
+model InvestmentPosition {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  risk        String // "high" | "low"
+  units       Float
+  amount      Int
+  navAtInvest Float
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, risk])
+  @@index([userId, createdAt])
+}
+
+model InvestmentNav {
+  id         Int      @id @default(autoincrement())
+  risk       String   @unique // "high" | "low"
+  currentNav Float
+  updatedAt  DateTime @updatedAt
 }

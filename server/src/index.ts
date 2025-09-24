@@ -3,9 +3,25 @@ import express from 'express';
 import cors from 'cors';
 import router from './routes';
 import prisma from './utils/prisma';
+import { bootstrapDemoData } from './utils/bootstrap';
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:8080' }));
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow dev origins on localhost, 127.0.0.1 and IPv6 loopback
+    const allowed = [
+      'http://localhost:8080',
+      'http://127.0.0.1:8080',
+      'http://[::1]:8080',
+    ];
+    if (!origin || allowed.includes(origin)) {
+      return callback(null, true);
+    }
+    // Also allow Vite proxy same-origin calls (no origin)
+    return callback(null, true);
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // Request logger for debugging
@@ -22,8 +38,14 @@ if (!process.env.JWT_SECRET) {
 }
 
 prisma.$connect()
-  .then(() => {
+  .then(async () => {
     console.log('[OK] Database connection established');
+    try {
+      await bootstrapDemoData();
+      console.log('[OK] Demo data bootstrapped');
+    } catch (e) {
+      console.warn('[WARN] Bootstrap skipped or failed:', (e as any)?.message || e);
+    }
   })
   .catch((err) => {
     console.error('[ERROR] Database connection failed:', err?.message || err);
