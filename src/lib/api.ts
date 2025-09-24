@@ -1,33 +1,80 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000';
+// Prefer explicit backend URL in dev to avoid proxy issues; allow override via VITE_API_BASE.
+// In production, default to relative so it can run behind the same origin.
+const API_BASE =
+  (import.meta.env.VITE_API_BASE as string | undefined) ??
+  (import.meta.env.DEV ? 'http://localhost:4000' : '');
 
 export async function register(payload: { fullName: string; email: string; mobile: string; password: string }) {
-  const res = await fetch(`${API_BASE}/api/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  // Backend expects: { email, password, name? }
+  const body = { email: payload.email, password: payload.password, name: payload.fullName };
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (e: any) {
+    throw new Error('Network error: could not reach API');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Register failed (${res.status})`);
+    throw new Error(err.message || err.error || `Register failed (${res.status})`);
   }
   return res.json();
 }
 
 export async function login(payload: { identifier: string; password: string }) {
-  const res = await fetch(`${API_BASE}/api/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  // Backend expects: { email, password }
+  const body = { email: payload.identifier, password: payload.password };
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (e: any) {
+    throw new Error('Network error: could not reach API');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Login failed (${res.status})`);
+    throw new Error(err.message || err.error || `Login failed (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function health() {
+  // Simple health check to verify dev proxy/backend
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/`);
+  } catch (e: any) {
+    throw new Error('Network error: could not reach API');
+  }
+  if (!res.ok) {
+    const errTxt = await res.text().catch(() => '');
+    throw new Error(`Health check failed (${res.status}) ${errTxt}`);
+  }
+  return res.json();
+}
+
+export async function seedDev() {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/auth/seed-dev`, { method: 'POST' });
+  } catch (e: any) {
+    throw new Error('Network error: could not reach API');
+  }
+  if (!res.ok) {
+    const errTxt = await res.text().catch(() => '');
+    throw new Error(`Seeding failed (${res.status}) ${errTxt}`);
   }
   return res.json();
 }
 
 export async function getDashboard() {
-  const res = await fetch(`${API_BASE}/api/dashboard`);
+  const res = await fetch(`${API_BASE}/api/dashboard/summary`);
   if (!res.ok) {
     const errTxt = await res.text().catch(() => '');
     throw new Error(`Failed to load dashboard (${res.status}) ${errTxt}`);
@@ -39,7 +86,6 @@ export async function getDashboard() {
 export async function linkBank(accountNumber: string) {
   const res = await fetch(`${API_BASE}/api/bank/link`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ accountNumber }),
   });
   if (!res.ok) {

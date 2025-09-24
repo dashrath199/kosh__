@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Smartphone, Eye, EyeOff } from "lucide-react";
-import { login, register } from "@/lib/api";
+import { login, register, health } from "@/lib/api";
 
 interface AuthSectionProps {
   onAuthenticated?: (user: { name: string; email: string; phone: string }) => void;
@@ -25,6 +25,9 @@ const AuthSection = ({ onAuthenticated }: AuthSectionProps) => {
   const [newPassword, setNewPassword] = useState("");
   const [loadingRegister, setLoadingRegister] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
+  // health check state
+  const [testing, setTesting] = useState(false);
+  const [healthMsg, setHealthMsg] = useState<string | null>(null);
 
   const handleLogin = async () => {
     setLoginError(null);
@@ -51,6 +54,20 @@ const AuthSection = ({ onAuthenticated }: AuthSectionProps) => {
       setRegisterError(e?.message || "Registration failed");
     } finally {
       setLoadingRegister(false);
+    }
+  };
+
+  const handleHealthCheck = async () => {
+    setTesting(true);
+    setHealthMsg(null);
+    try {
+      const res = await health();
+      const status = (res && (res.status || res.service)) ? `${res.status ?? 'ok'}${res.service ? ' - ' + res.service : ''}` : 'ok';
+      setHealthMsg(`API reachable: ${status}`);
+    } catch (e: any) {
+      setHealthMsg(e?.message || 'Health check failed');
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -137,6 +154,18 @@ const AuthSection = ({ onAuthenticated }: AuthSectionProps) => {
                     Forgot your password?
                   </Button>
                 </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleHealthCheck}
+                  disabled={testing}
+                >
+                  {testing ? "Checking API..." : "Test API connection"}
+                </Button>
+                {healthMsg && (
+                  <div className="text-xs text-muted-foreground text-center">{healthMsg}</div>
+                )}
               </TabsContent>
 
               <TabsContent value="register" className="space-y-4">

@@ -87,12 +87,11 @@ const Hero = ({ onGetStarted }: HeroProps) => {
             </div>
             
             {/* Floating cards */}
-            <Card className="absolute -top-4 -left-4 bg-gradient-card p-4 shadow-card">
+            <Card className="hidden md:block absolute -top-6 -left-6 lg:-top-10 lg:-left-10 bg-gradient-card p-4 shadow-card rounded-xl z-20">
               <div className="text-sm text-muted-foreground">Today's Growth</div>
               <div className="text-2xl font-bold text-success">+₹2,450</div>
             </Card>
-            
-            <Card className="absolute -bottom-4 -right-4 bg-gradient-card p-4 shadow-card">
+            <Card className="hidden md:block absolute -bottom-6 -right-8 lg:-bottom-10 lg:-right-12 bg-gradient-card p-4 shadow-card rounded-xl z-20">
               <div className="text-sm text-muted-foreground">Savings Rate</div>
               <div className="text-2xl font-bold text-primary">3.5%</div>
             </Card>
@@ -102,5 +101,4 @@ const Hero = ({ onGetStarted }: HeroProps) => {
     </section>
   );
 };
-
 export default Hero;

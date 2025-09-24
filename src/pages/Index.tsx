@@ -14,7 +14,7 @@ import Investments from "@/components/Investments";
 const queryClient = new QueryClient();
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<'landing' | 'auth' | 'dashboard'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'auth' | 'dashboard'>('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string; phone: string } | null>(null);
   const [dashboardView, setDashboardView] = useState('dashboard');
@@ -28,7 +28,6 @@ const Index = () => {
     setIsAuthenticated(true);
     setCurrentView('dashboard');
   };
-
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentView('landing');
