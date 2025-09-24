@@ -4,13 +4,11 @@ import cors from 'cors';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors({ origin: 'http://localhost:8080', credentials: true }));
+app.use(cors({ origin: [/^http:\/\/localhost:\d+$/], credentials: true }));
 app.use(express.json());
 
 // In-memory store (demo only)
 const users = new Map(); // key: email or phone, value: { name, email, phone, password }
-
-// Simple in-memory DB for hackathon demo
 const DB = {
   bank: { linked: false, accountNumber: null, linkedAt: null },
   transactions: /** @type {Array<{transactionId:string, amount:number, type:'credit'|'debit', date:string}>} */ ([]),

@@ -8,7 +8,10 @@ import {
   Bell,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Link as LinkIcon,
+  ListOrdered,
+  LineChart
 } from "lucide-react";
 
 interface NavigationProps {
@@ -22,6 +25,9 @@ const Navigation = ({ currentView, onViewChange, onLogout }: NavigationProps) =>
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'bank', label: 'Bank', icon: LinkIcon },
+    { id: 'transactions', label: 'Transactions', icon: ListOrdered },
+    { id: 'investments', label: 'Investments', icon: LineChart },
     { id: 'goals', label: 'Goals', icon: Target },
     { id: 'analytics', label: 'Analytics', icon: PieChart },
     { id: 'settings', label: 'Settings', icon: Settings },

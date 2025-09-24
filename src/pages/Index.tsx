@@ -7,6 +7,9 @@ import Hero from "@/components/Hero";
 import AuthSection from "@/components/AuthSection";
 import Dashboard from "@/components/Dashboard";
 import Navigation from "@/components/Navigation";
+import BankLink from "@/components/BankLink";
+import Transactions from "@/components/Transactions";
+import Investments from "@/components/Investments";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +91,9 @@ const Index = () => {
           />
           <main className="container mx-auto px-4 py-8">
             {dashboardView === 'dashboard' && <Dashboard />}
+            {dashboardView === 'bank' && <BankLink />}
+            {dashboardView === 'transactions' && <Transactions />}
+            {dashboardView === 'investments' && <Investments />}
             {dashboardView === 'goals' && (
               <div className="text-center py-20">
                 <h2 className="text-2xl font-bold mb-4">Goals Management</h2>
