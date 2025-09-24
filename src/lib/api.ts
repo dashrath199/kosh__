@@ -5,11 +5,11 @@ const API_BASE =
   (import.meta.env.DEV ? 'http://localhost:4000' : '');
 
 export async function register(payload: { fullName: string; email: string; mobile: string; password: string }) {
-  // Backend expects: { email, password, name? }
-  const body = { email: payload.email, password: payload.password, name: payload.fullName };
+  // Backend expects: { fullName, email, mobile, password }
+  const body = { fullName: payload.fullName, email: payload.email, mobile: payload.mobile, password: payload.password };
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}/api/auth/register`, {
+    res = await fetch(`${API_BASE}/api/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -25,11 +25,11 @@ export async function register(payload: { fullName: string; email: string; mobil
 }
 
 export async function login(payload: { identifier: string; password: string }) {
-  // Backend expects: { email, password }
+  // Backend expects: { email, password } (compat with TS AuthController)
   const body = { email: payload.identifier, password: payload.password };
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}/api/auth/login`, {
+    res = await fetch(`${API_BASE}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -48,7 +48,7 @@ export async function health() {
   // Simple health check to verify dev proxy/backend
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}/api/`);
+    res = await fetch(`${API_BASE}/api/health`);
   } catch (e: any) {
     throw new Error('Network error: could not reach API');
   }
@@ -74,7 +74,7 @@ export async function seedDev() {
 }
 
 export async function getDashboard() {
-  const res = await fetch(`${API_BASE}/api/dashboard/summary`);
+  const res = await fetch(`${API_BASE}/api/dashboard`);
   if (!res.ok) {
     const errTxt = await res.text().catch(() => '');
     throw new Error(`Failed to load dashboard (${res.status}) ${errTxt}`);
@@ -86,6 +86,7 @@ export async function getDashboard() {
 export async function linkBank(accountNumber: string) {
   const res = await fetch(`${API_BASE}/api/bank/link`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ accountNumber }),
   });
   if (!res.ok) {

@@ -1,73 +1,35 @@
-# Welcome to your Lovable project
+Kosh - Your Personal Digital Treasury
+A modern web application for managing personal finances and tracking sales growth.
+Tech Stack
 
-## Project info
+Frontend: React + TypeScript
+Styling: Tailwind CSS
+UI Components: shadcn-ui
+Build Tool: Vite
 
-**URL**: https://lovable.dev/projects/a5efcf86-e054-4084-b691-6b0b5200a690
+Getting Started
+Prerequisites
 
-## How can I edit this code?
+Node.js (v16 or higher)
+npm or yarn
 
-There are several ways of editing your application.
+Installation
 
-**Use Lovable**
+Clone the repository:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a5efcf86-e054-4084-b691-6b0b5200a690) and start prompting.
+bashgit clone https://github.com/dashrath199/kosh__.git
+cd kosh__
 
-Changes made via Lovable will be committed automatically to this repo.
+Install dependencies:
 
-**Use your preferred IDE**
+bashnpm install
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Start the development server:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+bashnpm run dev
 
-Follow these steps:
+Open your browser and navigate to http://localhost:5173
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a5efcf86-e054-4084-b691-6b0b5200a690) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Contributing
+This is a hackathon project. Feel free to contribute by opening issues or submitting pull requests.
