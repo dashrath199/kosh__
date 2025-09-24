@@ -6,7 +6,7 @@ export async function register(req: Request, res: Response) {
     console.log('[AUTH] register body:', req.body);
     const email = req.body?.email;
     const password = req.body?.password;
-    const name = req.body?.name ?? req.body?.fullName ?? undefined;
+    const name = req.body.fullName;
     if (!email || !password) return res.status(400).json({ message: 'email and password are required' });
     const user = await AuthService.register(email, password, name);
     return res.status(201).json({ id: user.id, email: user.email, name: user.name });

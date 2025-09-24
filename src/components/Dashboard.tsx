@@ -4,11 +4,11 @@ import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
 import { getDashboard } from "@/lib/api";
 
-import { 
-  TrendingUp, 
-  DollarSign, 
-  Target, 
-  Plus, 
+import {
+  TrendingUp,
+  DollarSign,
+  Target,
+  Plus,
   ArrowUpRight,
   Wallet,
   PiggyBank,
@@ -17,8 +17,13 @@ import {
 
 type Goal = { name: string; current: number; target: number; progress: number };
 type Activity = { type: 'save' | 'invest' | 'goal'; amount: number; description: string; time: string };
+type User = { name: string; email: string; phone: string };
 
-const Dashboard = () => {
+interface DashboardProps {
+  user?: User | null;
+}
+
+const Dashboard = ({ user }: DashboardProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [treasuryBalance, setTreasuryBalance] = useState(0);
@@ -54,7 +59,7 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, Rajesh! 👋</h1>
+          <h1 className="text-3xl font-bold">Welcome back{user?.name ? `, ${user.name}` : ''}! 👋</h1>
           <p className="text-muted-foreground">Here's how your money is growing</p>
         </div>
         <Button variant="primary" className="gap-2">

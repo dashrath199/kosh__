@@ -1,8 +1,6 @@
 // Prefer explicit backend URL in dev to avoid proxy issues; allow override via VITE_API_BASE.
 // In production, default to relative so it can run behind the same origin.
-const API_BASE =
-  (import.meta.env.VITE_API_BASE as string | undefined) ??
-  (import.meta.env.DEV ? 'http://localhost:4000' : '');
+const API_BASE = 'http://localhost:4000';
 
 export async function register(payload: { fullName: string; email: string; mobile: string; password: string }) {
   // Backend expects: { fullName, email, mobile, password }

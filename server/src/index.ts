@@ -5,7 +5,7 @@ import router from './routes';
 import prisma from './utils/prisma';
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:8080' }));
 app.use(express.json());
 
 // Request logger for debugging

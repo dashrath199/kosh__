@@ -83,13 +83,13 @@ const Index = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="min-h-screen bg-background">
-          <Navigation 
-            currentView={dashboardView} 
+          <Navigation
+            currentView={dashboardView}
             onViewChange={setDashboardView}
             onLogout={handleLogout}
           />
           <main className="container mx-auto px-4 py-8">
-            {dashboardView === 'dashboard' && <Dashboard />}
+            {dashboardView === 'dashboard' && <Dashboard user={user} />}
             {dashboardView === 'bank' && <BankLink />}
             {dashboardView === 'transactions' && <Transactions />}
             {dashboardView === 'investments' && <Investments />}
