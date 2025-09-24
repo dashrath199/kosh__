@@ -14,6 +14,9 @@ import {
   PiggyBank,
   Settings
 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Goal = { name: string; current: number; target: number; progress: number };
 type Activity = { type: 'save' | 'invest' | 'goal'; amount: number; description: string; time: string };
@@ -31,6 +34,16 @@ const Dashboard = ({ user }: DashboardProps) => {
   const [savingsThisMonth, setSavingsThisMonth] = useState(0);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+  const [newGoalOpen, setNewGoalOpen] = useState(false);
+  const [newGoalName, setNewGoalName] = useState("");
+  const [newGoalTarget, setNewGoalTarget] = useState<string>("");
+  const [newGoalCurrent, setNewGoalCurrent] = useState<string>("");
+  const [autoSaveRate, setAutoSaveRate] = useState<number>(3.5);
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [pendingRate, setPendingRate] = useState<string>("3.5");
+  const [weeklyTopUp, setWeeklyTopUp] = useState<number>(500);
+  const [modifyOpen, setModifyOpen] = useState(false);
+  const [pendingWeeklyTopUp, setPendingWeeklyTopUp] = useState<string>("500");
 
   useEffect(() => {
     let mounted = true;
@@ -54,6 +67,51 @@ const Dashboard = ({ user }: DashboardProps) => {
     return () => { mounted = false };
   }, []);
 
+  const resetNewGoalForm = () => {
+    setNewGoalName("");
+    setNewGoalTarget("");
+    setNewGoalCurrent("");
+  };
+
+  const handleSaveRate = () => {
+    const parsed = Number(pendingRate);
+    if (!Number.isFinite(parsed)) return;
+    const clamped = Math.max(0, Math.min(100, parsed));
+    setAutoSaveRate(clamped);
+    setAdjustOpen(false);
+  };
+
+  const handleSaveModifySettings = () => {
+    const parsedRate = Number(pendingRate);
+    const parsedWeekly = Number(pendingWeeklyTopUp);
+    if (Number.isFinite(parsedRate)) {
+      const clampedRate = Math.max(0, Math.min(100, parsedRate));
+      setAutoSaveRate(clampedRate);
+    }
+    if (Number.isFinite(parsedWeekly) && parsedWeekly >= 0) {
+      setWeeklyTopUp(parsedWeekly);
+    }
+    setModifyOpen(false);
+  };
+
+  const handleAddGoal = () => {
+    const name = newGoalName.trim();
+    const target = Number(newGoalTarget);
+    const current = Number(newGoalCurrent || 0);
+
+    if (!name) return;
+    if (!Number.isFinite(target) || target <= 0) return;
+    const safeCurrent = Number.isFinite(current) && current >= 0 ? current : 0;
+    const progress = Math.max(0, Math.min(100, Math.round((safeCurrent / target) * 100)));
+
+    setGoals((prev) => [
+      ...prev,
+      { name, current: safeCurrent, target, progress },
+    ]);
+    setNewGoalOpen(false);
+    resetNewGoalForm();
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -62,10 +120,58 @@ const Dashboard = ({ user }: DashboardProps) => {
           <h1 className="text-3xl font-bold">Welcome back{user?.name ? `, ${user.name}` : ''}! 👋</h1>
           <p className="text-muted-foreground">Here's how your money is growing</p>
         </div>
-        <Button variant="primary" className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Goal
-        </Button>
+        <Dialog open={newGoalOpen} onOpenChange={setNewGoalOpen}>
+          <DialogTrigger asChild>
+            <Button variant="primary" className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Goal
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create a new goal</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="goal-name">Goal name</Label>
+                <Input
+                  id="goal-name"
+                  placeholder="e.g. Emergency Fund"
+                  value={newGoalName}
+                  onChange={(e) => setNewGoalName(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="goal-target">Target amount (₹)</Label>
+                  <Input
+                    id="goal-target"
+                    type="number"
+                    min={0}
+                    placeholder="50000"
+                    value={newGoalTarget}
+                    onChange={(e) => setNewGoalTarget(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="goal-current">Current amount (₹)</Label>
+                  <Input
+                    id="goal-current"
+                    type="number"
+                    min={0}
+                    placeholder="0"
+                    value={newGoalCurrent}
+                    onChange={(e) => setNewGoalCurrent(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setNewGoalOpen(false); resetNewGoalForm(); }}>Cancel</Button>
+              <Button onClick={handleAddGoal}>Add Goal</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Key Metrics */}
@@ -108,7 +214,7 @@ const Dashboard = ({ user }: DashboardProps) => {
           <CardContent>
             <div className="text-2xl font-bold">₹{savingsThisMonth.toLocaleString('en-IN')}</div>
 
-            <p className="text-xs text-muted-foreground">3.5% of sales saved</p>
+            <p className="text-xs text-muted-foreground">{autoSaveRate}% of sales saved</p>
           </CardContent>
         </Card>
       </div>
@@ -124,7 +230,7 @@ const Dashboard = ({ user }: DashboardProps) => {
           </CardHeader>
           <CardContent className="space-y-6">
             {(goals.length ? goals : [
-              { name: 'Emergency Fund', current: 30000, target: 50000, progress: 60 },
+              { name: 'Emergency Fund', current: 3000, target: 50000, progress: 60 },
               { name: 'New Equipment', current: 25000, target: 100000, progress: 25 },
               { name: "Child's Education", current: 75000, target: 500000, progress: 15 },
             ]).map((g, idx) => (
@@ -154,11 +260,40 @@ const Dashboard = ({ user }: DashboardProps) => {
                 <div className="text-sm text-muted-foreground">From UPI sales</div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-primary">3.5%</div>
-                <Button variant="outline" size="sm" className="mt-2">
-                  <Settings className="h-3 w-3 mr-1" />
-                  Adjust
-                </Button>
+                <div className="text-2xl font-bold text-primary">{autoSaveRate}%</div>
+                <Dialog open={adjustOpen} onOpenChange={(open) => { setAdjustOpen(open); if (open) { setPendingRate(String(autoSaveRate)); } }}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="mt-2">
+                      <Settings className="h-3 w-3 mr-1" />
+                      Adjust
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Adjust Auto-Save Rate</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3 py-1">
+                      <div className="space-y-2">
+                        <Label htmlFor="auto-rate">Auto-save percentage (%)</Label>
+                        <Input
+                          id="auto-rate"
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={0.1}
+                          placeholder="3.5"
+                          value={pendingRate}
+                          onChange={(e) => setPendingRate(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">0 to 100%</p>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setAdjustOpen(false)}>Cancel</Button>
+                      <Button onClick={handleSaveRate}>Save</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
 
@@ -169,7 +304,7 @@ const Dashboard = ({ user }: DashboardProps) => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Weekly top-up</span>
-                <span className="text-sm font-medium">₹500</span>
+                <span className="text-sm font-medium">₹{weeklyTopUp.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Minimum save threshold</span>
@@ -177,9 +312,47 @@ const Dashboard = ({ user }: DashboardProps) => {
               </div>
             </div>
 
-            <Button variant="outline" className="w-full">
-              Modify Settings
-            </Button>
+            <Dialog open={modifyOpen} onOpenChange={(open) => { setModifyOpen(open); if (open) { setPendingRate(String(autoSaveRate)); setPendingWeeklyTopUp(String(weeklyTopUp)); } }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  Modify Settings
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Modify Savings Settings</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="modify-rate">Auto-save percentage (%)</Label>
+                    <Input
+                      id="modify-rate"
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.1}
+                      value={pendingRate}
+                      onChange={(e) => setPendingRate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modify-weekly">Weekly top-up (₹)</Label>
+                    <Input
+                      id="modify-weekly"
+                      type="number"
+                      min={0}
+                      step={100}
+                      value={pendingWeeklyTopUp}
+                      onChange={(e) => setPendingWeeklyTopUp(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setModifyOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSaveModifySettings}>Save</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </div>
