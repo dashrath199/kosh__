@@ -10,6 +10,7 @@ import Navigation from "@/components/Navigation";
 import BankLink from "@/components/BankLink";
 import Investments from "@/components/Investments";
 import GetPayment from "@/components/GetPayment";
+import Goals from "@/components/Goals";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +41,6 @@ const Index = () => {
         <TooltipProvider>
           <div className="min-h-screen">
             <Hero onGetStarted={handleGetStarted} />
-            {/* Add action handlers to Hero buttons */}
             <div className="fixed bottom-8 right-8">
               <button
                 onClick={handleGetStarted}
@@ -91,14 +91,11 @@ const Index = () => {
           <main className="container mx-auto px-4 py-8">
             {dashboardView === 'dashboard' && <Dashboard user={user} />}
             {dashboardView === 'bank' && <BankLink />}
-            {dashboardView === 'get-payment' && <GetPayment onGoToDashboard={() => setDashboardView('dashboard')} />}
-            {dashboardView === 'investments' && <Investments />}
-            {dashboardView === 'goals' && (
-              <div className="text-center py-20">
-                <h2 className="text-2xl font-bold mb-4">Goals Management</h2>
-                <p className="text-muted-foreground">Coming soon - Advanced goal tracking and management</p>
-              </div>
+            {dashboardView === 'get-payment' && (
+              <GetPayment onGoToDashboard={() => setDashboardView('dashboard')} />
             )}
+            {dashboardView === 'investments' && <Investments />}
+            {dashboardView === 'goals' && <Goals />}
             {dashboardView === 'analytics' && (
               <div className="text-center py-20">
                 <h2 className="text-2xl font-bold mb-4">Analytics & Reports</h2>
