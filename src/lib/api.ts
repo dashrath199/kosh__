@@ -191,21 +191,99 @@ export async function growInvestments(risk: 'high' | 'low', ratePct: number) {
 }
 
 // Mock settings endpoints
-export async function getSettings() {
+export interface Settings {
+  id: number;
+  userId: number;
+  autoSaveRate: number;
+  minThreshold: number;
+  roundUpsEnabled: boolean;
+  riskTolerance: string;
+  investmentGoal: string | null;
+  autoInvest: boolean;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  lowBalanceAlert: boolean;
+  weeklyReport: boolean;
+  twoFactorAuth: boolean;
+  biometricAuth: boolean;
+  currency: string;
+  language: string;
+  theme: string;
+  weeklyTopUp: number;
+  monthlyGoal: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserProfile {
+  id: number;
+  email: string;
+  name: string | null;
+  phoneNumber: string | null;
+  dateOfBirth: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  postalCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DataExportResponse {
+  message: string;
+  format: 'json' | 'csv' | 'sql';
+  requestedAt: string;
+  downloadUrl?: string;
+}
+
+export async function getSettings(): Promise<Settings> {
   const res = await fetch(`${API_BASE}/api/settings`);
   if (!res.ok) throw new Error(`Failed to fetch settings (${res.status})`);
   return res.json();
 }
 
-export async function updateSettings(payload: Partial<{ autoSaveRate: number; weeklyTopUp: number; minThreshold: number; roundUpsEnabled: boolean }>) {
+export async function updateSettings(payload: Partial<Settings>): Promise<Settings> {
   const res = await fetch(`${API_BASE}/api/settings`, {
-    method: 'POST',
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `Failed to update settings (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function getUserProfile(): Promise<UserProfile> {
+  const res = await fetch(`${API_BASE}/api/users/profile`);
+  if (!res.ok) throw new Error(`Failed to fetch profile (${res.status})`);
+  return res.json();
+}
+
+export async function updateUserProfile(payload: Partial<UserProfile>): Promise<UserProfile> {
+  const res = await fetch(`${API_BASE}/api/users/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to update profile (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function requestDataExport(format: 'json' | 'csv' | 'sql'): Promise<DataExportResponse> {
+  const res = await fetch(`${API_BASE}/api/users/export`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ format }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to request data export (${res.status})`);
   }
   return res.json();
 }

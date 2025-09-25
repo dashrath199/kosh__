@@ -14,11 +14,19 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
   passwordHash String
   name         String?
-  createdAt    DateTime @default(now())
+  phoneNumber  String?
+  dateOfBirth  DateTime?
+  address      String?
+  city         String?
+  state        String?
+  country      String?
+  postalCode   String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
   banks        UserBank[]
@@ -43,14 +51,46 @@ model UserBank {
 }
 
 model Settings {
-  id              Int     @id @default(autoincrement())
-  userId          Int     @unique
-  autoSaveRate    Float   @default(3.5)
-  weeklyTopUp     Int     @default(500)
-  minThreshold    Int     @default(100)
-  roundUpsEnabled Boolean @default(true)
-
-  user User @relation(fields: [userId], references: [id])
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  
+  // Auto-save settings
+  autoSaveRate      Float    @default(3.5) // Percentage of income to auto-save
+  minThreshold      Int      @default(100) // Minimum amount to trigger auto-save
+  roundUpsEnabled   Boolean  @default(true) // Enable/disable round-up savings
+  
+  // Investment preferences
+  riskTolerance     String   @default("moderate") // low, moderate, high
+  investmentGoal    String?  // short_term, medium_term, long_term
+  autoInvest        Boolean  @default(true)
+  
+  // Notification preferences
+  emailNotifications Boolean @default(true)
+  pushNotifications Boolean @default(true)
+  lowBalanceAlert   Boolean @default(true)
+  weeklyReport      Boolean @default(true)
+  
+  // Security
+  twoFactorAuth    Boolean  @default(false)
+  biometricAuth    Boolean  @default(true)
+  
+  // Account settings
+  currency         String   @default("INR")
+  language         String   @default("en")
+  theme            String   @default("system") // light, dark, system
+  
+  // Additional features
+  weeklyTopUp      Int      @default(500) // Weekly savings goal
+  monthlyGoal      Int?     // Optional monthly savings goal
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id])
+  
+  @@map("settings")
 }
 
 model Transaction {

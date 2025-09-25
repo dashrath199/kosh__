@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Settings } from "@/components/Settings";
 import Hero from "@/components/Hero";
 import AuthSection from "@/components/AuthSection";
 import Dashboard from "@/components/Dashboard";
@@ -11,6 +12,7 @@ import BankLink from "@/components/BankLink";
 import Investments from "@/components/Investments";
 import GetPayment from "@/components/GetPayment";
 import Goals from "@/components/Goals";
+import Analytics from "@/components/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -96,18 +98,8 @@ const Index = () => {
             )}
             {dashboardView === 'investments' && <Investments />}
             {dashboardView === 'goals' && <Goals />}
-            {dashboardView === 'analytics' && (
-              <div className="text-center py-20">
-                <h2 className="text-2xl font-bold mb-4">Analytics & Reports</h2>
-                <p className="text-muted-foreground">Coming soon - Detailed financial analytics</p>
-              </div>
-            )}
-            {dashboardView === 'settings' && (
-              <div className="text-center py-20">
-                <h2 className="text-2xl font-bold mb-4">Settings</h2>
-                <p className="text-muted-foreground">Coming soon - Account and app settings</p>
-              </div>
-            )}
+            {dashboardView === 'analytics' && <Analytics />}
+            {dashboardView === 'settings' && <Settings />}
           </main>
         </div>
         <Toaster />
